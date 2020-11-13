@@ -9,7 +9,6 @@ const App = () => {
   const onSelect = useCallback(category => setCategory(category), []);
   return (
     <>
-    {/* category 작성 후 Categories.js 에서 props 설정 */}
     <Categories category={category} onSelect={onSelect} />
     <NewsList category={category} />
     </>

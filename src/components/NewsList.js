@@ -1,8 +1,8 @@
-// useState : 컴포넌트 상태관리 함수 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import styled from 'styled-components';
 import NewsItem from './NewsItem';
 import axios from 'axios';
+import usePromise from '../lib/usePromise';
 
 const NewsListBlock = styled.div`
   box-sizing: border-box;
@@ -17,42 +17,37 @@ const NewsListBlock = styled.div`
   }
 `;
 
-const NewsList = () => {
-    const [articles, setArticles] = useState(null);
-    const [loading, setLoading] = useState(false);
-
-    useEffect(() => {
-        const fetchData = async () => {
-            setLoading(true);
-            try {
-                const response = await axios.get('http://newsapi.org/v2/top-headlines?country=kr&apiKey=ed63b771c9d8468f9aa031b1de62f8e8',);
-                setArticles(response.data.articles);// 전체 기사 불러오기
-            } catch(e) {
-                console.log(e);
-            }
-            setLoading(false);
-        };
-        fetchData();
-    },
-    [] );
-
-    // 대기 중일때 
-    if(loading) {
-        return <NewsListBlock>대기중..</NewsListBlock>;
-    }
-    if(!articles) {
-        return null;
-    }
-
-    // 기사가 있을 때 
-    return (
-        <NewsListBlock>
-            {articles.map(article => (
-                <NewsItem key={article.url} article={article} />
-            ))}
-        </NewsListBlock>
+const NewsList = ({ category }) => {
+  const [loading, response, error] = usePromise(() => {
+    const query = category === 'all' ? '' : `&category=${category}`;
+    return axios.get(
+      `https://newsapi.org/v2/top-headlines?country=kr${query}&apiKey=ed63b771c9d8468f9aa031b1de62f8e8`,
     );
+  }, [category]);
 
+  // 대기중일 때
+  if (loading) {
+    return <NewsListBlock>대기중...</NewsListBlock>;
+  }
+  // 아직 response 값이 설정되지 않았을 때
+  if (!response) {
+    return null;
+  }
+
+  // 에러가 발생했을 때
+  if (error) {
+    return <NewsListBlock>에러 발생!</NewsListBlock>;
+  }
+
+  // response 값이 유효할 때
+  const { articles } = response.data;
+  return (
+    <NewsListBlock>
+      {articles.map(article => (
+        <NewsItem key={article.url} article={article} />
+      ))}
+    </NewsListBlock>
+  );
 };
 
 export default NewsList;
